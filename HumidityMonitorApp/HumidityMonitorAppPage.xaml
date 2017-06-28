@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:chart="clr-namespace:Syncfusion.SfChart.XForms;assembly=Syncfusion.SfChart.XForms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:local="clr-namespace:HumidityMonitorApp" xmlns:viewModels="clr-namespace:HumidityMonitorApp.ViewModels" x:Class="HumidityMonitorApp.HumidityMonitorAppPage">
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <local:InverseBooleanConverter x:Key="inverter" />
+            <OnPlatform x:Key="buttonColor" x:TypeArguments="Color" Android="Accent" WinPhone="Accent" iOS="Default" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="8*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <!-- Latest humidity display -->
+        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Location}" HorizontalTextAlignment="Center" VerticalTextAlignment="End" />
+        <Label Grid.Row="1" Grid.Column="0" FontSize="Large" Text="{Binding LatestHumidity.Humidity, StringFormat='{0}% RH'}" VerticalOptions="Center" HorizontalOptions="CenterAndExpand" HorizontalTextAlignment="Center" VerticalTextAlignment="Start" />
+        <!-- Dehumidifier controls -->
+        <Label Grid.Row="0" Grid.Column="1" Text="Dehumidifier" HorizontalTextAlignment="Center" VerticalTextAlignment="End" />
+        <StackLayout Grid.Row="1" Grid.Column="1" Orientation="Horizontal" HorizontalOptions="CenterAndExpand">
+            <Button Text="On" TextColor="{StaticResource buttonColor}" FontSize="Large" BorderColor="Transparent" BackgroundColor="Transparent" Command="{Binding SwitchOnDehumidifierCommand}" VerticalOptions="Start" HorizontalOptions="Start" />
+            <Button Text="Off" TextColor="{StaticResource buttonColor}" FontSize="Large" BorderColor="Transparent" BackgroundColor="Transparent" Command="{Binding SwitchOffDehumidifierCommand}" VerticalOptions="Start" HorizontalOptions="EndAndExpand" />
+        </StackLayout>
+        <!-- View toggle switch -->
+        <StackLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalOptions="StartAndExpand">
+            <Label Text="View:" VerticalTextAlignment="Center" />
+            <Switch IsToggled="{Binding ViewSwitch}" VerticalOptions="CenterAndExpand" />
+            <Label Text="{Binding CurrentView}" VerticalTextAlignment="Center" />
+            <ActivityIndicator Color="Red" IsRunning="{Binding IsLoading}" HorizontalOptions="Fill" />
+        </StackLayout>
+        <!--  Date navigation -->
+        <StackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalOptions="Fill">
+            <Button x:Name="PreviousDateButton" TextColor="{StaticResource buttonColor}" WidthRequest="50" HorizontalOptions="Start" FontSize="Large" BorderColor="Transparent" BackgroundColor="Transparent" Command="{Binding MoveToPreviousDateCommand}" Text="◀">
+            </Button>
+            <Label IsVisible="{Binding ViewSwitch}" HorizontalOptions="CenterAndExpand" Text="{Binding DetailedHumidityDate, StringFormat='{0:d}'}" VerticalTextAlignment="Center" />
+            <StackLayout IsVisible="{Binding ViewSwitch, Converter={StaticResource inverter}}" Orientation="Horizontal" HorizontalOptions="CenterAndExpand">
+                <Label HorizontalOptions="FillAndExpand" Text="{Binding HumiditySummaryStartDate, StringFormat='{0:d}'}" VerticalTextAlignment="Center" />
+                <Label HorizontalOptions="FillAndExpand" Text="-" VerticalTextAlignment="Center" />
+                <Label HorizontalOptions="FillAndExpand" Text="{Binding HumiditySummaryEndDate, StringFormat='{0:d}'}" VerticalTextAlignment="Center" />
+            </StackLayout>
+            <Button x:Name="NextDateButton" TextColor="{StaticResource buttonColor}" WidthRequest="50" HorizontalOptions="End" FontSize="Large" BorderColor="Transparent" BackgroundColor="Transparent" Command="{Binding MoveToNextDateCommand}" Text="▶" />
+        </StackLayout>
+        <chart:SfChart Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" IsVisible="{Binding ViewSwitch}">
+            <chart:SfChart.PrimaryAxis>
+                <chart:DateTimeAxis IntervalType="Hours" Interval="4">
+                    <chart:DateTimeAxis.LabelStyle>
+                        <chart:ChartAxisLabelStyle LabelFormat="HH:mm" />
+                    </chart:DateTimeAxis.LabelStyle>
+                    <chart:DateTimeAxis.Title>
+                        <chart:ChartAxisTitle Text="Time" />
+                    </chart:DateTimeAxis.Title>
+                </chart:DateTimeAxis>
+            </chart:SfChart.PrimaryAxis>
+            <chart:SfChart.SecondaryAxis>
+                <chart:NumericalAxis Minimum="20" Maximum="130">
+                    <chart:NumericalAxis.Title>
+                        <chart:ChartAxisTitle Text="Relative Humidity" />
+                    </chart:NumericalAxis.Title>
+                </chart:NumericalAxis>
+            </chart:SfChart.SecondaryAxis>
+            <chart:FastLineSeries ItemsSource="{Binding DetailedHumidityCollection}" XBindingPath="Date" YBindingPath="Humidity">
+            </chart:FastLineSeries>
+        </chart:SfChart>
+        <chart:SfChart Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" IsVisible="{Binding ViewSwitch, Converter={StaticResource inverter}}">
+            <chart:SfChart.PrimaryAxis>
+                <chart:DateTimeAxis IntervalType="Days" Interval="1" LabelCreated = "PrimaryAxis_LabelCreated">
+                    <chart:DateTimeAxis.Title>
+                        <chart:ChartAxisTitle Text="Day" />
+                    </chart:DateTimeAxis.Title>
+                </chart:DateTimeAxis>
+            </chart:SfChart.PrimaryAxis>
+            <chart:SfChart.SecondaryAxis>
+                <chart:NumericalAxis Minimum="20" Maximum="130">
+                    <chart:NumericalAxis.Title>
+                        <chart:ChartAxisTitle Text="Relative Humidity" />
+                    </chart:NumericalAxis.Title>
+                </chart:NumericalAxis>
+            </chart:SfChart.SecondaryAxis>
+            <chart:CandleSeries ItemsSource="{Binding HumiditySummaryCollection}" XBindingPath="Date" High="Max" Low="Min" Open="Min" Close="Max" BearFillColor="#C44536" BullFillColor="#197278">
+                <chart:CandleSeries.DataMarker>
+                    <chart:ChartDataMarker>
+                        <chart:ChartDataMarker.LabelStyle>
+                            <chart:DataMarkerLabelStyle LabelPosition="Outer" />
+                        </chart:ChartDataMarker.LabelStyle>
+                    </chart:ChartDataMarker>
+                </chart:CandleSeries.DataMarker>
+            </chart:CandleSeries>
+        </chart:SfChart>
+    </Grid>
+</ContentPage>
